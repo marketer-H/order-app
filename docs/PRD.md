@@ -585,3 +585,279 @@
 - 재고 히스토리 로그
 - 주문 완료 처리 기능
 - 주문 취소 기능
+
+---
+
+##6. 백엔드 개발 상세
+
+###6.1 데이터베이스 설계
+
+####6.1.1 데이터 모델
+
+**Menus (메뉴)**
+- id: 메뉴 ID (Primary Key, Auto Increment)
+- name: 메뉴 이름 (예: "아메리카노(ICE)")
+- description: 메뉴 설명
+- price: 기본 가격 (정수형)
+- image: 이미지 URL 또는 경로
+- stock: 재고 수량 (정수형)
+- created_at: 생성일시
+- updated_at: 수정일시
+
+**Options (옵션)**
+- id: 옵션 ID (Primary Key, Auto Increment)
+- menu_id: 연결된 메뉴 ID (Foreign Key)
+- name: 옵션 이름 (예: "샷 추가")
+- price: 옵션 가격 (정수형)
+- created_at: 생성일시
+
+**Orders (주문)**
+- id: 주문 ID (Primary Key, Auto Increment)
+- order_date: 주문 일시 (Timestamp)
+- status: 주문 상태 (VARCHAR) - 'received', 'manufacturing', 'completed'
+- total_amount: 총 주문 금액 (정수형)
+- created_at: 생성일시
+- updated_at: 수정일시
+
+**Order_Items (주문 상세)**
+- id: 주문 상세 ID (Primary Key, Auto Increment)
+- order_id: 주문 ID (Foreign Key)
+- menu_id: 메뉴 ID (Foreign Key)
+- quantity: 주문 수량 (정수형)
+- item_price: 상품별 가격 (정수형)
+- created_at: 생성일시
+
+**Order_Item_Options (주문 상품 옵션)**
+- id: ID (Primary Key, Auto Increment)
+- order_item_id: 주문 상세 ID (Foreign Key)
+- option_id: 옵션 ID (Foreign Key)
+- created_at: 생성일시
+
+---
+
+###6.2 사용자 흐름
+
+####6.2.1 메뉴 조회 흐름
+1. 프런트엔드에서 메뉴 목록 조회 요청
+2. 백엔드가 데이터베이스에서 Menus 테이블 조회
+3. 각 메뉴에 연결된 Options 조회
+4. 응답 데이터를 프런트엔드로 전송
+5. 프런트엔드에서 주문하기 화면에 메뉴 카드 표시
+6. 관리자 화면에는 재고 수량도 함께 표시
+
+**예상 응답 형식:**
+```json
+{
+  "menus": [
+    {
+      "id": 1,
+      "name": "아메리카노(ICE)",
+      "description": "간단한 설명...",
+      "price": 4000,
+      "image": "/americano-ice.jpg",
+      "stock": 10,
+      "options": [
+        {
+          "id": 1,
+          "name": "샷 추가",
+          "price": 500
+        },
+        {
+          "id": 2,
+          "name": "시럽 추가",
+          "price": 0
+        }
+      ]
+    }
+  ]
+}
+```
+
+####6.2.2 주문 처리 흐름
+1. 사용자가 장바구니에서 '주문하기' 버튼 클릭
+2. 장바구니 정보를 백엔드로 전송
+3. 백엔드에서 새로운 주문 생성 (Orders 테이블)
+4. 주문 상세 정보 저장 (Order_Items 테이블)
+5. 선택된 옵션 정보 저장 (Order_Item_Options 테이블)
+6. 주문된 메뉴의 재고 차감 (Menus 테이블 업데이트)
+7. 성공 응답 반환
+8. 장바구니 초기화
+
+**요청 형식:**
+```json
+{
+  "items": [
+    {
+      "menu_id": 1,
+      "quantity": 2,
+      "options": [1, 2],
+      "item_total_price": 9000
+    }
+  ],
+  "total_amount": 9000
+}
+```
+
+####6.2.3 주문 현황 조회 흐름
+1. 관리자 화면에서 주문 현황 조회
+2. 백엔드가 Orders 테이블에서 주문 목록 조회
+3. 각 주문의 상세 정보(Order_Items) 조회
+4. 각 주문 상품의 옵션 정보(Order_Item_Options) 조회
+5. 주문 일시, 메뉴명, 수량, 옵션, 금액 정보 반환
+6. 프런트엔드에서 주문 현황 표시
+
+####6.2.4 주문 상태 변경 흐름
+1. 관리자가 '제조 시작' 버튼 클릭
+2. 주문 ID를 백엔드로 전송
+3. 백엔드에서 주문 상태를 'manufacturing'으로 업데이트
+4. 성공 응답 반환
+5. 프런트엔드에서 주문 상태 업데이트
+6. 대시보드 통계 자동 업데이트
+
+---
+
+###6.3 API 설계
+
+####6.3.1 메뉴 조회 API
+**GET /api/menus**
+- 기능: 전체 메뉴 목록 조회
+- 요청: 파라미터 없음
+- 응답: 메뉴 목록 (옵션 포함)
+
+####6.3.2 주문 생성 API
+**POST /api/orders**
+- 기능: 새로운 주문 생성
+- 요청 본문:
+```json
+{
+  "items": [
+    {
+      "menu_id": 1,
+      "quantity": 2,
+      "options": [1],
+      "item_total_price": 9000
+    }
+  ],
+  "total_amount": 9000
+}
+```
+- 응답: 생성된 주문 정보
+
+####6.3.3 주문 목록 조회 API
+**GET /api/orders**
+- 기능: 전체 주문 목록 조회
+- 요청: 파라미터 없음 또는 상태 필터(status)
+- 응답: 주문 목록 (주문 상세 정보 포함)
+
+**쿼리 파라미터:**
+- status: 주문 상태 (optional) - 'received', 'manufacturing', 'completed'
+
+####6.3.4 주문 상태 업데이트 API
+**PATCH /api/orders/:id/status**
+- 기능: 특정 주문의 상태 업데이트
+- 요청 본문:
+```json
+{
+  "status": "manufacturing"
+}
+```
+- 응답: 업데이트된 주문 정보
+
+####6.3.5 주문 상세 조회 API
+**GET /api/orders/:id**
+- 기능: 특정 주문 상세 정보 조회
+- 요청: order_id (URL 파라미터)
+- 응답: 주문 상세 정보
+
+####6.3.6 재고 수정 API
+**PATCH /api/menus/:id/stock**
+- 기능: 특정 메뉴의 재고 수량 수정
+- 요청 본문:
+```json
+{
+  "stock": 15
+}
+```
+- 응답: 업데이트된 메뉴 정보
+
+---
+
+###6.4 데이터 무결성 및 규칙
+
+####6.4.1 재고 관리
+- 주문 생성 시 재고 차감
+- 재고가 0 이하로 내려가지 않도록 검증
+- 재고 부족 시 주문 실패 처리
+
+####6.4.2 주문 상태
+- 주문 상태는 명확한 흐름을 따름: 'received' → 'manufacturing' → 'completed'
+- 이전 상태로 되돌릴 수 없음
+- 상태 변경 시 updated_at 갱신
+
+####6.4.3 가격 계산
+- 주문 총액 = (메뉴 기본 가격 + 옵션 가격) × 수량
+- 백엔드에서 가격 검증 수행
+- 프런트엔드에서 전달된 가격과 계산된 가격 비교
+
+---
+
+###6.5 백엔드 기술 스택
+- **프레임워크**: Node.js, Express
+- **데이터베이스**: PostgreSQL
+- **ORM**: Sequelize 또는 TypeORM (선택사항)
+- **인증**: 미구현 (학습 목적)
+- **API 응답 형식**: JSON
+
+---
+
+###6.6 에러 처리
+
+####6.6.1 에러 응답 형식
+```json
+{
+  "error": true,
+  "message": "에러 메시지",
+  "code": "ERROR_CODE"
+}
+```
+
+####6.6.2 주요 에러 케이스
+- 400 Bad Request: 잘못된 요청 데이터
+- 404 Not Found: 존재하지 않는 리소스
+- 409 Conflict: 재고 부족으로 인한 주문 실패
+- 500 Internal Server Error: 서버 내부 에러
+
+####6.6.3 에러 처리 규칙
+- 모든 API는 일관된 에러 형식 사용
+- 에러 로깅 (서버 콘솔)
+- 클라이언트에게 명확한 에러 메시지 제공
+- 개발 환경에서는 상세 에러 정보 제공
+
+---
+
+###6.7 개발 우선순위
+
+####Phase 1 (MVP)
+- 데이터베이스 스키마 생성
+- Menus 테이블 CRUD
+- Options 테이블 CRUD
+- Orders, Order_Items, Order_Item_Options 테이블 생성
+- GET /api/menus API
+- POST /api/orders API
+- GET /api/orders API
+- PATCH /api/orders/:id/status API
+
+####Phase 2
+- PATCH /api/menus/:id/stock API
+- 가격 검증 로직
+- 재고 관리 로직
+- 에러 처리 강화
+- 데이터 유효성 검증
+
+####Phase 3 (선택사항)
+- 주문 통계 API
+- 주문 히스토리 조회
+- 주문 취소 기능
+- 이미지 파일 업로드 기능
+- CORS 설정
+- API 문서화 (Swagger)
