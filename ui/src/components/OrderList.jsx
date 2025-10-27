@@ -10,6 +10,13 @@ function OrderList({ orders, onStartManufacturing }) {
     return `${month}월 ${day}일 ${hours}:${minutes}`
   }
 
+  const formatOptions = (options) => {
+    if (!options || !Array.isArray(options) || options.length === 0) {
+      return ''
+    }
+    return ' (' + options.map(opt => opt.name || opt).join(', ') + ')'
+  }
+
   if (orders.length === 0) {
     return (
       <div className="order-list">
@@ -38,7 +45,7 @@ function OrderList({ orders, onStartManufacturing }) {
                 {order.items.map((item, index) => (
                   <div key={index} className="order-item-detail">
                     <span className="order-item-name">{item.productName}</span>
-                    <span className="order-item-options">{item.options}</span>
+                    <span className="order-item-options">{formatOptions(item.options)}</span>
                     <span className="order-item-quantity"> X {item.quantity}</span>
                   </div>
                 ))}

@@ -7,8 +7,12 @@ import './AdminPage.css'
 function AdminPage() {
   const { inventory, orders, stats, updateStock, updateOrderStatus } = useApp()
 
-  const handleStartManufacturing = (orderId) => {
-    updateOrderStatus(orderId, 'manufacturing')
+  const handleStartManufacturing = async (orderId) => {
+    try {
+      await updateOrderStatus(orderId, 'manufacturing')
+    } catch (error) {
+      alert(`상태 업데이트 실패: ${error.message}`)
+    }
   }
 
   return (

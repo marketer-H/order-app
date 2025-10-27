@@ -48,7 +48,12 @@ router.get('/', async (req, res) => {
         `, [order.id])
         
         return {
-          ...order,
+          id: order.id,
+          orderDate: order.order_date,
+          status: order.status,
+          totalAmount: order.total_amount,
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
           items: itemsResult.rows.map(item => ({
             productName: item.product_name,
             options: item.options || [],

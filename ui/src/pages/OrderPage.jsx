@@ -51,26 +51,38 @@ function OrderPage() {
     setCart(newCart)
   }
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (cart.length === 0) return
     
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
     const totalAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0)
     
-    // 주문 데이터 생성
-    const orderItems = cart.map(item => ({
-      productName: item.productName,
-      options: item.optionsDetails.map(opt => opt.name).join(', '),
-      quantity: item.quantity
-    }))
-    
-    addOrder({
-      items: orderItems,
-      totalAmount: totalAmount
-    })
-    
-    alert(`주문이 완료되었습니다!\n총 ${totalItems}개 품목\n총액 ${totalAmount.toLocaleString()}원`)
-    setCart([])
+    try {
+      // 주문 데이터 생성 (백엔드 형식에 맞게)
+      const orderItems = cart.map(item => {
+        const basePrice = item.basePrice
+        const optionsPrice = item.optionsDetails.reduce((sum, opt) => sum + opt.price, 0)
+        const itemTotalPrice = (basePrice + optionsPrice) * item.quantity
+        
+        // options는 이미 option ID 배열로 저장되어 있음
+        return {
+          menu_id: item.productId,
+          quantity: item.quantity,
+          options: item.options,  // 옵션 ID 배열 (예: [1, 2])
+          item_total_price: itemTotalPrice
+        }
+      })
+      
+      await addOrder({
+        items: orderItems,
+        total_amount: totalAmount
+      })
+      
+      alert(`주문이 완료되었습니다!\n총 ${totalItems}개 품목\n총액 ${totalAmount.toLocaleString()}원`)
+      setCart([])
+    } catch (error) {
+      alert(`주문 실패: ${error.message}`)
+    }
   }
 
   return (

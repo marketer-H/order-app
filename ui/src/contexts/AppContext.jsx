@@ -1,109 +1,148 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { get, post, patch } from '../utils/api'
 
 const AppContext = createContext()
 
 export function AppProvider({ children }) {
-  // 상품 데이터
-  const [products] = useState([
-    {
-      id: 1,
-      name: '아메리카노(ICE)',
-      price: 4000,
-      description: '간단한 설명...',
-      image: '/americano-ice.jpg',
-      options: [
-        { id: 'shot', name: '샷 추가', price: 500 },
-        { id: 'syrup', name: '시럽 추가', price: 0 }
-      ]
-    },
-    {
-      id: 2,
-      name: '아메리카노(HOT)',
-      price: 4000,
-      description: '간단한 설명...',
-      image: '/americano-hot.jpg',
-      options: [
-        { id: 'shot', name: '샷 추가', price: 500 },
-        { id: 'syrup', name: '시럽 추가', price: 0 }
-      ]
-    },
-    {
-      id: 3,
-      name: '카페라떼',
-      price: 5000,
-      description: '간단한 설명...',
-      image: '/caffe-latte.jpg',
-      options: [
-        { id: 'shot', name: '샷 추가', price: 500 },
-        { id: 'syrup', name: '시럽 추가', price: 0 }
-      ]
-    }
-  ])
-
-  // 재고 데이터
-  const [inventory, setInventory] = useState([
-    { id: 1, name: '아메리카노 (ICE)', stock: 10 },
-    { id: 2, name: '아메리카노 (HOT)', stock: 8 },
-    { id: 3, name: '카페라떼', stock: 3 }
-  ])
-
-  // 주문 데이터
+  const [products, setProducts] = useState([])
+  const [inventory, setInventory] = useState([])
   const [orders, setOrders] = useState([])
-
-  // 통계
   const [stats, setStats] = useState({
     totalOrders: 0,
     receivedOrders: 0,
     manufacturingOrders: 0,
     completedOrders: 0
   })
+  const [loading, setLoading] = useState(true)
 
-  const updateStock = (productId, newStock) => {
-    setInventory(prev =>
-      prev.map(item =>
-        item.id === productId ? { ...item, stock: newStock } : item
-      )
-    )
-  }
+  // 초기 데이터 로드
+  useEffect(() => {
+    loadMenus()
+    loadOrders()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const addOrder = (orderData) => {
-    const newOrder = {
-      id: Date.now(),
-      orderDate: new Date().toISOString(),
-      ...orderData,
-      status: 'received'
+  // 메뉴 데이터 로드
+  const loadMenus = async () => {
+    try {
+      const data = await get('/menus')
+      if (data.menus) {
+        setProducts(data.menus)
+        // 재고 데이터 추출
+        const inventoryData = data.menus.map(menu => ({
+          id: menu.id,
+          name: menu.name,
+          stock: menu.stock
+        }))
+        setInventory(inventoryData)
+      }
+    } catch (error) {
+      console.error('메뉴 로드 실패:', error)
+      // 에러 발생 시 기본 데이터 사용
+      setProducts([])
+      setInventory([])
+    } finally {
+      setLoading(false)
     }
-    
-    setOrders(prev => [newOrder, ...prev])
-    setStats(prev => ({
-      ...prev,
-      totalOrders: prev.totalOrders + 1,
-      receivedOrders: prev.receivedOrders + 1
-    }))
   }
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(prev =>
-      prev.map(order =>
-        order.id === orderId
-          ? { ...order, status: newStatus }
-          : order
-      )
-    )
+  // 주문 목록 로드
+  const loadOrders = async () => {
+    try {
+      const data = await get('/orders')
+      if (data.orders) {
+        setOrders(data.orders)
+        // 통계 계산
+        const totalOrders = data.orders.length
+        const receivedOrders = data.orders.filter(o => o.status === 'received').length
+        const manufacturingOrders = data.orders.filter(o => o.status === 'manufacturing').length
+        const completedOrders = data.orders.filter(o => o.status === 'completed').length
+        
+        setStats({
+          totalOrders,
+          receivedOrders,
+          manufacturingOrders,
+          completedOrders
+        })
+      }
+    } catch (error) {
+      console.error('주문 로드 실패:', error)
+      setOrders([])
+    }
+  }
 
-    // 통계 업데이트
-    if (newStatus === 'manufacturing') {
-      setStats(prev => ({
-        ...prev,
-        receivedOrders: Math.max(0, prev.receivedOrders - 1),
-        manufacturingOrders: prev.manufacturingOrders + 1
-      }))
-    } else if (newStatus === 'completed') {
-      setStats(prev => ({
-        ...prev,
-        manufacturingOrders: Math.max(0, prev.manufacturingOrders - 1),
-        completedOrders: prev.completedOrders + 1
-      }))
+  // 재고 업데이트
+  const updateStock = async (productId, newStock) => {
+    try {
+      const data = await patch(`/menus/${productId}/stock`, { stock: newStock })
+      // 로컬 상태 업데이트
+      setInventory(prev =>
+        prev.map(item =>
+          item.id === productId ? { ...item, stock: newStock } : item
+        )
+      )
+      // products도 업데이트
+      setProducts(prev =>
+        prev.map(product =>
+          product.id === productId ? { ...product, stock: newStock } : product
+        )
+      )
+      return data
+    } catch (error) {
+      console.error('재고 업데이트 실패:', error)
+      throw error
+    }
+  }
+
+  // 주문 생성
+  const addOrder = async (orderData) => {
+    try {
+      const data = await post('/orders', orderData)
+      
+      // 로컬 상태 업데이트
+      await loadOrders()
+      
+      return data
+    } catch (error) {
+      console.error('주문 생성 실패:', error)
+      throw error
+    }
+  }
+
+  // 주문 상태 업데이트
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await patch(`/orders/${orderId}/status`, { status: newStatus })
+      
+      // 로컬 상태 업데이트
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? { ...order, status: newStatus }
+            : order
+        )
+      )
+
+      // 통계 업데이트
+      if (newStatus === 'manufacturing') {
+        setStats(prev => ({
+          ...prev,
+          receivedOrders: Math.max(0, prev.receivedOrders - 1),
+          manufacturingOrders: prev.manufacturingOrders + 1
+        }))
+      } else if (newStatus === 'completed') {
+        setStats(prev => ({
+          ...prev,
+          manufacturingOrders: Math.max(0, prev.manufacturingOrders - 1),
+          completedOrders: prev.completedOrders + 1
+        }))
+      }
+      
+      // 주문 목록 다시 로드
+      await loadOrders()
+    } catch (error) {
+      console.error('주문 상태 업데이트 실패:', error)
+      throw error
     }
   }
 
@@ -115,7 +154,9 @@ export function AppProvider({ children }) {
       stats,
       updateStock,
       addOrder,
-      updateOrderStatus
+      updateOrderStatus,
+      loading,
+      loadOrders
     }}>
       {children}
     </AppContext.Provider>
@@ -129,4 +170,3 @@ export function useApp() {
   }
   return context
 }
-

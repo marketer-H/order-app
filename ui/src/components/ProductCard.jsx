@@ -2,42 +2,43 @@ import { useState } from 'react'
 import './ProductCard.css'
 
 function ProductCard({ product, onAddToCart }) {
-  const [selectedOptions, setSelectedOptions] = useState({
-    shot: false,
-    syrup: false
-  })
+  const [selectedOptionIds, setSelectedOptionIds] = useState(new Set())
 
-  const handleOptionChange = (option) => {
-    setSelectedOptions(prev => ({
-      ...prev,
-      [option]: !prev[option]
-    }))
+  const handleOptionChange = (optionId) => {
+    setSelectedOptionIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(optionId)) {
+        newSet.delete(optionId)
+      } else {
+        newSet.add(optionId)
+      }
+      return newSet
+    })
   }
 
   const handleAddToCart = () => {
-    const selectedOptionsList = Object.entries(selectedOptions)
-      .filter(([_, isSelected]) => isSelected)
-      .map(([key]) => key)
+    const selectedOptionsArray = Array.from(selectedOptionIds)
+    const selectedOptionsDetails = product.options.filter(opt => selectedOptionIds.has(opt.id))
 
     onAddToCart({
       productId: product.id,
       productName: product.name,
       basePrice: product.price,
-      options: selectedOptionsList,
-      optionsDetails: product.options.filter(opt => selectedOptionsList.includes(opt.id))
+      options: selectedOptionsArray, // option ID 배열
+      optionsDetails: selectedOptionsDetails
     })
 
     // 옵션 초기화
-    setSelectedOptions({
-      shot: false,
-      syrup: false
-    })
+    setSelectedOptionIds(new Set())
   }
 
   const calculateTotalPrice = () => {
     let total = product.price
-    if (selectedOptions.shot) total += 500
-    if (selectedOptions.syrup) total += 0
+    product.options.forEach(opt => {
+      if (selectedOptionIds.has(opt.id)) {
+        total += opt.price
+      }
+    })
     return total
   }
 
@@ -55,7 +56,7 @@ function ProductCard({ product, onAddToCart }) {
             <label key={option.id} className="option-checkbox">
               <input
                 type="checkbox"
-                checked={selectedOptions[option.id]}
+                checked={selectedOptionIds.has(option.id)}
                 onChange={() => handleOptionChange(option.id)}
               />
               <span>
