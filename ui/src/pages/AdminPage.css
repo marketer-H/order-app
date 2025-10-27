@@ -1,8 +1,12 @@
 .admin-page {
   padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
 }
 
-.admin-page h2 {
-  margin-bottom: 1rem;
+@media (max-width: 768px) {
+  .admin-page {
+    padding: 1rem;
+  }
 }
-
