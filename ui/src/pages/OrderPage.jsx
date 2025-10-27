@@ -1,46 +1,11 @@
 import { useState } from 'react'
+import { useApp } from '../contexts/AppContext'
 import ProductCard from '../components/ProductCard'
 import Cart from '../components/Cart'
 import './OrderPage.css'
 
-// 커피 메뉴 데이터
-const products = [
-  {
-    id: 1,
-    name: '아메리카노(ICE)',
-    price: 4000,
-    description: '간단한 설명...',
-    image: '/americano-ice.jpg',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 }
-    ]
-  },
-  {
-    id: 2,
-    name: '아메리카노(HOT)',
-    price: 4000,
-    description: '간단한 설명...',
-    image: '/americano-hot.jpg',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 }
-    ]
-  },
-  {
-    id: 3,
-    name: '카페라떼',
-    price: 5000,
-    description: '간단한 설명...',
-    image: '/caffe-latte.jpg',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 }
-    ]
-  }
-]
-
 function OrderPage() {
+  const { products, addOrder } = useApp()
   const [cart, setCart] = useState([])
 
   const handleAddToCart = (item) => {
@@ -91,6 +56,18 @@ function OrderPage() {
     
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
     const totalAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0)
+    
+    // 주문 데이터 생성
+    const orderItems = cart.map(item => ({
+      productName: item.productName,
+      options: item.optionsDetails.map(opt => opt.name).join(', '),
+      quantity: item.quantity
+    }))
+    
+    addOrder({
+      items: orderItems,
+      totalAmount: totalAmount
+    })
     
     alert(`주문이 완료되었습니다!\n총 ${totalItems}개 품목\n총액 ${totalAmount.toLocaleString()}원`)
     setCart([])
