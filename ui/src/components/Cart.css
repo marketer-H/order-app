@@ -1,0 +1,164 @@
+.cart-container {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.cart-header h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.cart-body {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.cart-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-items-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.cart-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding-left: 1.5rem;
+  border-left: 1px solid #ddd;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  gap: 1rem;
+  transition: background 0.2s;
+}
+
+.cart-item:hover {
+  background: #fafafa;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  color: #555;
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.item-details {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.item-quantity {
+  color: #999;
+  font-size: 0.9rem;
+  min-width: 40px;
+}
+
+.item-price {
+  color: #333;
+  font-weight: 600;
+  font-size: 1.1rem;
+  min-width: 100px;
+  text-align: right;
+}
+
+.remove-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  background: #c82333;
+}
+
+.cart-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.total-label {
+  font-size: 1rem;
+  color: #666;
+}
+
+.total-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d5016;
+}
+
+.order-btn {
+  background: #2d5016;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
+}
+
+.order-btn:hover {
+  background: #3d7026;
+}
+
+.order-btn:active {
+  background: #1d4016;
+}
+
+@media (max-width: 768px) {
+  .cart-body {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-right {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid #ddd;
+    padding-top: 1.5rem;
+  }
+}
