@@ -36,10 +36,12 @@ router.get('/', async (req, res) => {
     res.json({ menus })
   } catch (error) {
     console.error('메뉴 조회 오류:', error)
+    console.error('에러 스택:', error.stack)
     res.status(500).json({ 
       error: true, 
       message: '메뉴를 불러오는데 실패했습니다.',
-      code: 'MENUS_FETCH_ERROR' 
+      code: 'MENUS_FETCH_ERROR',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 })

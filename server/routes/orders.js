@@ -66,10 +66,12 @@ router.get('/', async (req, res) => {
     res.json({ orders })
   } catch (error) {
     console.error('주문 조회 오류:', error)
+    console.error('에러 스택:', error.stack)
     res.status(500).json({ 
       error: true, 
       message: '주문을 불러오는데 실패했습니다.',
-      code: 'ORDERS_FETCH_ERROR' 
+      code: 'ORDERS_FETCH_ERROR',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 })

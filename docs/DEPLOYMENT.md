@@ -137,9 +137,18 @@ VITE_APP_TITLE=easys cafe
 
 ## 6. 문제 해결
 
+### 500 에러 (Internal Server Error)
+**가장 흔한 원인: 데이터베이스 스키마 미적용**
+
+1. **백엔드 로그 확인**:
+   - Render Dashboard → Web Service → Logs 탭
+   - "relation 'menus' does not exist" 같은 에러가 보이면 스키마 미적용
+
+2. **데이터베이스 스키마 적용** (아래 "빠른 스키마 적용" 참고)
+
 ### 메뉴가 안 보임
 1. Render DB에 스키마 적용됐는지 확인
-2. 프런트엔드 환경변수 `VITE_API_BASE_URL` 올바른지 확인
+2. 프런트엔드 환경변수 `VITE_API_BASE_URL` 올바른 embedded. 확인
 3. 브라우저 개발자도구 → Network 탭에서 `/api/menus` 요청 확인
 
 ### CORS 에러
@@ -193,4 +202,48 @@ Render Dashboard → 각 서비스 → Environment 탭
 
 ### 로그 확인
 Render Dashboard → 각 서비스 → Logs 탭
+
+---
+
+## 9. 빠른 스키마 적용 (500 에러 해결용)
+
+### 방법 1: psql 사용 (가장 빠름)
+
+1. **Render PostgreSQL 정보 확인**:
+   - Render Dashboard → PostgreSQL → Connections
+   - Internal Database URL 복사
+
+2. **터미널에서 실행**:
+```bash
+cd /Users/jjeong/Desktop/order-app
+export PGPASSWORD="<Render DB Password>"
+export PATH=/Library/PostgreSQL/18/bin:$PATH
+
+psql "host=<Render DB Host> port=5432 dbname=<DB Name> user=<DB User> sslmode=require" \
+  -f server/database/schema.sql
+```
+
+3. **데이터 확인**:
+```bash
+psql "host=<Render DB Host> port=5432 dbname=<DB Name> user=<DB User> sslmode=require" \
+  -c "SELECT name, stock FROM menus;"
+```
+→ 3개 메뉴가 보여야 함
+
+### 방법 2: Render 콘솔 사용
+
+1. Render Dashboard → PostgreSQL 인스턴스 클릭
+2. "psql" 버튼 클릭
+3. `server/database/schema.sql` 파일 내용 전체 복사해서 붙여넣기
+4. Enter 누르기
+5. "SELECT * FROM menus;" 실행해서 데이터 확인
+
+### 방법 3: 자동 스크립트 사용
+리스트 dir하여 스키마 적용 스크립트 확인:
+```bash
+ls -la /tmp/apply_schema.sh
+/tmp/apply_schema.sh
+```
+
+**스키마 적용 후**: 백엔드 Manual Deploy 실행 (Render Dashboard → Backend → Epic Menu → Manual Deploy)
 
