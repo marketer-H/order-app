@@ -7,11 +7,20 @@ const app = express()
 
 // CORS 설정
 let corsOptions = { origin: true }
-if (process.env.NODE_ENV === 'production' && process.env.ALLOWED_ORIGIN) {
+if (process.env.NODE_ENV === 'production' && (process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGINS)) {
+  const raw = process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN
+  const allowList = raw.split(',').map(v => v.trim()).filter(Boolean)
   corsOptions = {
-    origin: process.env.ALLOWED_ORIGIN,
+    origin: function (origin, callback) {
+      // allow same-origin/non-browser or exact match in allowList
+      if (!origin || allowList.includes(origin)) {
+        return callback(null, true)
+      }
+      return callback(new Error('CORS not allowed for origin: ' + origin))
+    },
     methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type']
+    allowedHeaders: ['Content-Type'],
+    optionsSuccessStatus: 204
   }
 }
 app.use(cors(corsOptions))
