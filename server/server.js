@@ -5,8 +5,17 @@ const db = require('./config/database')
 
 const app = express()
 
-// 미들웨어
-app.use(cors())
+// CORS 설정
+let corsOptions = { origin: true }
+if (process.env.NODE_ENV === 'production' && process.env.ALLOWED_ORIGIN) {
+  corsOptions = {
+    origin: process.env.ALLOWED_ORIGIN,
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+  }
+}
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 

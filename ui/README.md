@@ -33,7 +33,7 @@ ui/
 └── vite.config.js
 ```
 
-## 설치 및 실행
+## 설치 및 실행 / 배포 환경변수
 
 ### 개발 서버 실행
 
@@ -42,6 +42,16 @@ npm run dev
 ```
 
 개발 서버가 시작되면 브라우저에서 http://localhost:5173 으로 접속할 수 있습니다.
+
+환경변수(Vite):
+
+```
+# 로컬(ui/.env.local)
+VITE_API_BASE_URL=http://localhost:3000/api
+
+# Render Static Site(대시보드 Environment)
+VITE_API_BASE_URL=https://<your-api>.onrender.com/api
+```
 
 ### 빌드
 

@@ -5,7 +5,7 @@ import Cart from '../components/Cart'
 import './OrderPage.css'
 
 function OrderPage() {
-  const { products, addOrder } = useApp()
+  const { products, addOrder, loading } = useApp()
   const [cart, setCart] = useState([])
 
   const handleAddToCart = (item) => {
@@ -85,19 +85,31 @@ function OrderPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="order-page">
+        <div className="loading-message">로딩 중...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="order-page">
       <div className="products-section">
         <h2>메뉴</h2>
-        <div className="products-grid">
-          {products.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="empty-message">메뉴가 없습니다.</div>
+        ) : (
+          <div className="products-grid">
+            {products.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
+        )}
       </div>
       
       {cart.length > 0 && (
