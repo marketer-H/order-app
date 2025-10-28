@@ -1,5 +1,7 @@
 // API 기본 설정
-const API_BASE_URL = 'http://localhost:3000/api'
+// 배포 시 Render Static Site의 환경변수(VITE_API_BASE_URL)에서 API 베이스 URL을 주입합니다.
+// 로컬 개발에서는 기본값으로 localhost를 사용합니다.
+const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
 // API 호출 헬퍼 함수
 async function apiRequest(endpoint, options = {}) {
