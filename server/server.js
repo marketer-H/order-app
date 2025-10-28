@@ -19,8 +19,13 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // 라우트
+// API 라우트 (표준 경로)
 app.use('/api/menus', require('./routes/menus'))
 app.use('/api/orders', require('./routes/orders'))
+
+// 호환 라우트 (환경변수에 /api가 누락된 경우 대비)
+app.use('/menus', require('./routes/menus'))
+app.use('/orders', require('./routes/orders'))
 
 // 기본 라우트
 app.get('/', (req, res) => {
